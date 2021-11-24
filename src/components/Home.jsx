@@ -1,54 +1,86 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { UserContext } from "../context/UserContext";
 import "../styles/home.css";
 
 const Home = () => {
   const API_KEY = process.env.REACT_APP_API_KEY;
   const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
+  const { liked, setLiked } = useContext(UserContext);
+  const localList = localStorage.getItem("list");
+  let likedItems;
+
+  if (localList) {
+    likedItems = JSON.parse(localList);
+  } else {
+    likedItems = [];
+  }
 
   const toggleHeart = (e) => {
     e.target.classList.toggle("is-active");
   };
-
-  // const getMoreMovies = () => {
-  //   const fetchData = async () => {
-  //     const request = await fetch(
-  //       `https://api.themoviedb.org/3/trending/all/day?api_key=${API_KEY}&page=${page}`
-  //     )
-  //       .then((res) => res.json())
-  //       .then((array) => array.results);
-
-  //     const newData = [...data, request];
-  //     setData(newData);
-  //     setPage(page + 1);
-  //   };
-  //   fetchData();
-  // };
+  const setFav = (data) => {
+    let isLiked = false;
+    let likedIndex;
+    for (let i = 0; i < likedItems.length; i++) {
+      const isItLiked = data.id.toString().includes(likedItems[i].id);
+      if (isItLiked) {
+        isLiked = true;
+        likedIndex = i;
+      }
+    }
+    if (!isLiked) {
+      let newList;
+      if (localStorage.getItem("list") === null) {
+        newList = [data];
+      } else {
+        newList = [...liked, data];
+      }
+      setLiked(newList);
+      localStorage.setItem("list", JSON.stringify(newList));
+    } else {
+      let newLikedList = likedItems.splice(likedIndex, 1);
+      localStorage.setItem("list", JSON.stringify(likedItems));
+      setLiked(likedItems);
+    }
+  };
+  const heartClicked = (e, item) => {
+    toggleHeart(e);
+    setFav(item);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       const request = await fetch(
-        `https://api.themoviedb.org/3/trending/all/day?api_key=${API_KEY}&page=${page}`
+        `https://api.themoviedb.org/3/trending/all/day?api_key=${API_KEY}`
       )
         .then((res) => res.json())
         .then((array) => array.results);
 
       setData(request);
-      setPage(2);
     };
     fetchData();
   }, [API_KEY]);
 
   useEffect(() => {
-    console.log(data);
-  }, [data]);
+    if (localList === null) {
+      setLiked([]);
+    }
+    const parsedList = JSON.parse(localList);
+    setLiked(parsedList);
+  }, []);
 
   return (
     <main className="home-page">
-      {/* <h1 className="heading">Trending Movies</h1> */}
       <div className="results">
         {data.map((data, index) => {
           const base_url = "https://image.tmdb.org/t/p/original/";
+          let isLiked = false;
+          for (let i = 0; i < likedItems.length; i++) {
+            const isItLiked = data.id.toString().includes(likedItems[i].id);
+            if (isItLiked) {
+              isLiked = true;
+            }
+          }
           return (
             <div
               className="thumbnail"
@@ -67,7 +99,12 @@ const Home = () => {
                   className="poster"
                 />
                 <div className="stage">
-                  <div className="heart" onClick={(e) => toggleHeart(e)}></div>
+                  <div
+                    className={`${isLiked ? "heart is-active" : "heart"}`}
+                    onClick={(e) => {
+                      heartClicked(e, data);
+                    }}
+                  ></div>
                 </div>
               </div>
               <div className="details">
@@ -83,7 +120,6 @@ const Home = () => {
           );
         })}
       </div>
-      {/* <button onClick={getMoreMovies}>Show More</button> */}
     </main>
   );
 };
