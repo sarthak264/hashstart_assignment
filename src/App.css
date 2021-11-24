@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap");
 *,
 *::after,
 *::before {
@@ -7,5 +8,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 body {
-  font-family: sans-serif;
+  padding: 0 0.5rem;
+  background-color: #06202a;
+  font-family: "Open Sans", sans-serif;
+  color: #fff;
 }
